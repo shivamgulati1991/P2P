@@ -29,7 +29,7 @@ public class Server implements Runnable {
 			new Server(portNo);
 		}
 		else{
-			System.out.println("Error. Check arguments");
+			System.out.println("Error. Check arguments. Add port number as an argument if missing.");
 		}
 	}
 
