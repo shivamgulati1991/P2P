@@ -120,7 +120,7 @@ public class Client implements Runnable {
 			File file=new File(location.getCanonicalPath()+"\\"+fileName);
 			if(file.exists()){
 				System.out.println("yes");
-				output.writeObject(" ADD RFC " + rfcNumber + " " + version + "\n HOST:"+ InetAddress.getByName(hostName) + "\n PORT:" + randomPort + "\n TITLE:" + rfcTitle + "\n");
+				output.writeObject(" ADD RFC " + rfcNumber + " " + version + "\n HOST:"+ InetAddress.getByName(hostName).getHostAddress() + "\n PORT:" + randomPort + "\n TITLE:" + rfcTitle + "\n");
 				output.writeObject(rfcNumber);
 				output.writeObject(hostName);
 				output.writeObject(randomPort);
@@ -139,7 +139,7 @@ public class Client implements Runnable {
 	
 	private static void showRfcs(ObjectOutputStream output, ObjectInputStream input, String hostName, String randomPort)
 			throws IOException {
-		output.writeObject(" LIST ALL " + version + "\n HOST: " + InetAddress.getByName(hostName)
+		output.writeObject(" LIST ALL " + version + "\n HOST: " + InetAddress.getByName(hostName).getHostAddress()
 				+ "\n PORT: " + randomPort + "\n");
 		try {
 			String resp = ((String) input.readObject()).trim();
