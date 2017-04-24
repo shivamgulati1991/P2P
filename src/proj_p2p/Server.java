@@ -37,8 +37,17 @@ public class Server implements Runnable {
 		}
 	}
 
-	public void addRfc(){
-		
+	public void addRfc(ObjectOutputStream output, ObjectInputStream input){
+		int clientPort = 0;
+		try {
+				int rfc = (Integer) input.readObject();
+				String hostName = (String) input.readObject();
+				String port = (String) input.readObject();
+				String title = (String) input.readObject();
+				clientPort = Integer.parseInt((String) input.readObject());
+			} catch (Exception e) {
+				System.out.println(e);
+			}
 	}
 	
 	public void deleteRfc(){

@@ -80,6 +80,7 @@ public class Client implements Runnable {
 				int choice=Integer.parseInt(br.readLine());
 				switch (choice){
 				case 1:
+					Add(output,input,hostName,Integer.toString(randomPort),br);
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
 				case 2: 
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
@@ -112,17 +113,23 @@ public class Client implements Runnable {
 		}
 		
 		fileName="RFC"+rfcNumber+".txt";
-		File location=new File("RFC");
+		File location=new File("Rfc");
 		
 		try{
 			File file=new File(location.getCanonicalPath()+"\\"+fileName);
 			if(file.exists()){
+				System.out.println("yes");
 				output.writeObject(" ADD RFC " + rfcNumber + " " + version + "\n HOST:"+ hostName + "\n PORT:" + randomPort + "\n TITLE:" + rfcTitle + "\n");
 				output.writeObject(rfcNumber);
 				output.writeObject(hostName);
 				output.writeObject(randomPort);
 				output.writeObject(rfcTitle);
-				System.out.println(input.readObject());
+				//System.out.println(input.readObject());
+				Rfc newRfc= new Rfc(Integer.parseInt(rfcNumber),rfcTitle,hostName);
+				Server.rfcList.add(newRfc);
+				
+				for(Rfc peer:Server.rfcList)
+					System.out.println(peer.hostname+" "+peer.rfcnumber+" title "+peer.title);
 			}
 			else if((!file.exists())){
 				System.out.println("File doesn't exist for adding.");
