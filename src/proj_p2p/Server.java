@@ -40,11 +40,16 @@ public class Server implements Runnable {
 	public void addRfc(ObjectOutputStream output, ObjectInputStream input){
 		int clientPort = 0;
 		try {
-				int rfc = (Integer) input.readObject();
+				String rfcNumber = (String) input.readObject();
 				String hostName = (String) input.readObject();
 				String port = (String) input.readObject();
 				String title = (String) input.readObject();
 				clientPort = Integer.parseInt((String) input.readObject());
+				Rfc newRfc=new Rfc(Integer.parseInt(rfcNumber),title,hostName);
+				rfcList.add(newRfc);
+				for(Rfc peer:rfcList)
+					System.out.println(peer.rfcnumber+" "+peer.hostname+" "+peer.title);
+				
 			} catch (Exception e) {
 				System.out.println(e);
 			}
@@ -66,8 +71,8 @@ public class Server implements Runnable {
 		// TODO Auto-generated method stub
 		
 		Socket socket=null;
-		ObjectInputStream  input;
-	    ObjectOutputStream output;
+		ObjectInputStream  input = null;
+	    ObjectOutputStream output = null;
 	    String hostName = null;
 	    int cPort = 0;
 	    try{
@@ -90,6 +95,37 @@ public class Server implements Runnable {
 	    catch(Exception e){
 	    	System.err.println(e);
 	    }
+	    
+		   try { 
+			   while (true)
+		       {  
+				   	String request = (String) input.readObject();
+				 	System.out.println(request);
+				 	//String[] result = request.trim().split("\\s");
+				 	//executeRequest(result[0], input, output);
+					switch(request.trim().split("\\s")[0].trim()){
+					case "ADD":{
+						addRfc(output, input);	
+						break;
+					}
+					/*case "LIST":{
+						listAllRFCs(input, output);
+						break;
+					}
+					case "LOOKUP":{
+						lookUpAnRFC(input, output);
+						break;
+					}*/
+					case "default":{
+						break;
+					}
+				}
+		        }       
+		  	} catch (Exception e) {
+		  		//removePeer(clientPort, true);
+		  		System.err.println(e);
+		  		//System.out.println("Connection with client " + hostName +" @ " + clientPort + " closed");
+		  	}
 		
 	}
 

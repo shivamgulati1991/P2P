@@ -124,12 +124,7 @@ public class Client implements Runnable {
 				output.writeObject(hostName);
 				output.writeObject(randomPort);
 				output.writeObject(rfcTitle);
-				//System.out.println(input.readObject());
-				Rfc newRfc= new Rfc(Integer.parseInt(rfcNumber),rfcTitle,hostName);
-				Server.rfcList.add(newRfc);
-				
-				for(Rfc peer:Server.rfcList)
-					System.out.println(peer.hostname+" "+peer.rfcnumber+" title "+peer.title);
+				System.out.println(input.readObject());
 			}
 			else if((!file.exists())){
 				System.out.println("File doesn't exist for adding.");
