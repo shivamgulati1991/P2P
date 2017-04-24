@@ -1,6 +1,9 @@
 package proj_p2p;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
@@ -56,6 +59,7 @@ public class Client implements Runnable {
 				
 				System.out.println("Client is running now."+"Randomport: "+randomPort);
 				System.out.println("Hostname: "+hostName+"  Port: "+clientPort);
+				userMenu(output,input,hostName,InetAddress.getByName(IPaddr),clientPort,randomPort);
 			}
 			catch(Exception e){
 				System.err.print(e);
@@ -63,6 +67,69 @@ public class Client implements Runnable {
 		}
 		else{
 			System.out.println("Incorrect arguments entered.");
+		}
+	}
+	
+	private static void userMenu(ObjectOutputStream output,ObjectInputStream input,String hostName,InetAddress IPaddr,int clientPort,int randomPort){
+		System.out.println("Please select option number from the below choices:");
+		System.out.println("\n1 - Add an RFC \n2 - List RFCs \n3 - Lookup RFC \n4 - Download(GET) RFC \n5 - Exit");
+		BufferedReader br=new BufferedReader(new InputStreamReader(System.in));
+		
+		try{
+			while(true){
+				int choice=Integer.parseInt(br.readLine());
+				switch (choice){
+				case 1:
+					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
+				case 2: 
+					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
+				case 3: 
+					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
+				case 4: 
+					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
+				case 5: System.exit(1);
+				default: 
+					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
+				}
+			}
+		}
+		catch(Exception e){
+			System.out.println("Error occured!");
+			System.err.println(e);
+		}
+	}
+	
+	private static void Add(ObjectOutputStream output,ObjectInputStream input,String hostName,String randomPort,BufferedReader br){
+		String rfcNumber=null,rfcTitle=null,fileName=null;
+		try{
+			System.out.println("Enter RFC number: ");
+			rfcNumber=br.readLine();
+			System.out.println("Enter RFC title: ");
+			rfcTitle=br.readLine();
+		}
+		catch(Exception e){
+			System.err.println(e);
+		}
+		
+		fileName="RFC"+rfcNumber+".txt";
+		File location=new File("RFC");
+		
+		try{
+			File file=new File(location.getCanonicalPath()+"\\"+fileName);
+			if(file.exists()){
+				output.writeObject(" ADD RFC " + rfcNumber + " " + version + "\n HOST:"+ hostName + "\n PORT:" + randomPort + "\n TITLE:" + rfcTitle + "\n");
+				output.writeObject(rfcNumber);
+				output.writeObject(hostName);
+				output.writeObject(randomPort);
+				output.writeObject(rfcTitle);
+				System.out.println(input.readObject());
+			}
+			else if((!file.exists())){
+				System.out.println("File doesn't exist for adding.");
+			}
+		}
+		catch(Exception e){
+			System.out.println(e);
 		}
 	}
 	@Override
