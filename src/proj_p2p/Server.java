@@ -8,7 +8,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -39,18 +38,19 @@ public class Server implements Runnable {
 	}
 
 	public void addRfc(ObjectOutputStream output, ObjectInputStream input){
-		int clientPort = 0;
 		try {
 				String rfcNumber = (String) input.readObject();
 				String hostName = (String) input.readObject();
-				String port = (String) input.readObject();
+				int clientPort = Integer.parseInt(((String) input.readObject()).trim());
 				String title = (String) input.readObject();
-				clientPort = Integer.parseInt((String) input.readObject());
-				Rfc newRfc=new Rfc(Integer.parseInt(rfcNumber),title,hostName);
+				
+				Rfc newRfc=new Rfc(Integer.parseInt(rfcNumber),title,hostName+":"+clientPort);
 				rfcList.add(newRfc);
 				for(Rfc peer:rfcList)
 					System.out.println(peer.rfcnumber+" "+peer.hostname+" "+peer.title);
 				
+				System.out.println("RFC has been added successfully");
+				output.writeObject("RFC has been added successfully");
 			} catch (Exception e) {
 				System.out.println(e);
 			}
@@ -60,16 +60,13 @@ public class Server implements Runnable {
 		
 	}
 	
-	public void showRfcs(ObjectOutputStream output,ObjectInputStream input){
+	public void showRfcs(ObjectOutputStream output,ObjectInputStream input) {
 		try{
-			System.out.println("here");
 			output.writeObject(version + " 200 OK\n");
 			ListIterator<Rfc> iterator = rfcList.listIterator();
 			Rfc traverseRfc = null;
-			System.out.println("here2");
 		    while((iterator.hasNext()))                                    
 		    {
-		    	System.out.println("here3");
 		    	traverseRfc = iterator.next();
 		    	output.writeObject(traverseRfc.rfcnumber + " " + traverseRfc.title + " " + traverseRfc.hostname + "\n");
 		    }
@@ -79,8 +76,46 @@ public class Server implements Runnable {
 		}
 	}
 	
-	public void lookupRfc(){
-		
+	public void lookupRfc(ObjectOutputStream output,ObjectInputStream input){
+		try {
+			int rfcNumber = Integer.parseInt((String) input.readObject());
+			String rfcTitle= (String) input.readObject();
+			ListIterator<Rfc> iterator = rfcList.listIterator();
+			Rfc traverseRfc = null;
+			int checkExists = 0;
+			String existingRfcs="";
+			while((iterator.hasNext()))                                    
+		    {
+				traverseRfc = (Rfc) iterator.next();
+		    	if(rfcNumber==traverseRfc.rfcnumber){
+		    		checkExists = 1;
+		    		System.out.println("yes");
+		    		existingRfcs=existingRfcs + rfcNumber + " " + traverseRfc.title + " " + traverseRfc.hostname + "\n";
+		    	}
+		    }
+			if(checkExists==1){
+			output.writeObject(version + " 200 OK\n");
+			output.writeObject(existingRfcs);
+			output.writeObject("\n");
+			}
+			/*if(checkExists==1){
+				output.writeObject(version + " 200 OK\n");
+			    while((iterator.hasNext()))                                    
+			    {
+			    	traverseRfc = (Rfc) iterator.next();
+			    	if(rfcNumber==traverseRfc.rfcnumber){
+			    		output.writeObject(rfcNumber + " " + traverseRfc.title + " " + traverseRfc.hostname + "\n");
+			    	}
+			    }
+			    output.writeObject("\n");
+			}*/
+			else{
+				output.writeObject("404 Not Found");
+			}
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+
 	}
 	@Override
 	public void run() {
@@ -128,10 +163,10 @@ public class Server implements Runnable {
 						showRfcs(output, input);
 						break;
 					}
-					/*case "LOOKUP":{
-						lookUpAnRFC(input, output);
+					case "LOOKUP":{
+						lookupRfc(output, input);
 						break;
-					}*/
+					}
 					case "default":{
 						break;
 					}

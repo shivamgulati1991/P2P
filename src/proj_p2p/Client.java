@@ -13,6 +13,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Random;
 
 public class Client implements Runnable {
@@ -71,13 +72,13 @@ public class Client implements Runnable {
 	}
 	
 	private static void userMenu(ObjectOutputStream output,ObjectInputStream input,String hostName,InetAddress IPaddr,int clientPort,int randomPort){
-		System.out.println("Please select option number from the below choices:");
+		System.out.println("\n\nPlease select option number from the below choices:");
 		System.out.println("\n1 - Add an RFC \n2 - List RFCs \n3 - Lookup RFC \n4 - Download(GET) RFC \n5 - Exit");
 		BufferedReader br=new BufferedReader(new InputStreamReader(System.in));
 		
 		try{
 			while(true){
-				int choice=Integer.parseInt(br.readLine());
+				int choice=Integer.parseInt(br.readLine().trim());
 				switch (choice){
 				case 1:
 					add(output,input,hostName,Integer.toString(randomPort),br);
@@ -86,6 +87,7 @@ public class Client implements Runnable {
 					showRfcs(output,input,hostName,Integer.toString(randomPort));
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
 				case 3: 
+					lookupRfc(output,input,br,hostName,Integer.toString(randomPort));
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
 				case 4: 
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
@@ -102,12 +104,13 @@ public class Client implements Runnable {
 	}
 	
 	private static void add(ObjectOutputStream output,ObjectInputStream input,String hostName,String randomPort,BufferedReader br){
+		System.out.println("You can add a new RFC here..");
 		String rfcNumber=null,rfcTitle=null,fileName=null;
 		try{
 			System.out.println("Enter RFC number: ");
-			rfcNumber=br.readLine();
+			rfcNumber=br.readLine().trim();
 			System.out.println("Enter RFC title: ");
-			rfcTitle=br.readLine();
+			rfcTitle=br.readLine().trim();
 		}
 		catch(Exception e){
 			System.err.println(e);
@@ -119,14 +122,12 @@ public class Client implements Runnable {
 		try{
 			File file=new File(location.getCanonicalPath()+"\\"+fileName);
 			if(file.exists()){
-				System.out.println("yes");
-				output.writeObject(" ADD RFC " + rfcNumber + " " + version + "\n HOST:"+ InetAddress.getByName(hostName).getHostAddress() + "\n PORT:" + randomPort + "\n TITLE:" + rfcTitle + "\n");
+				output.writeObject(" ADD RFC " + rfcNumber + " " + version + "\n HOST:"+ hostName + "\n PORT:" + randomPort + "\n TITLE:" + rfcTitle + "\n");
 				output.writeObject(rfcNumber);
 				output.writeObject(hostName);
 				output.writeObject(randomPort);
 				output.writeObject(rfcTitle);
-				System.out.println("RFC has been added\n");
-				//System.out.println(input.readObject());
+				System.out.println(input.readObject());
 			}
 			else if((!file.exists())){
 				System.out.println("File doesn't exist for adding.");
@@ -139,32 +140,57 @@ public class Client implements Runnable {
 	
 	private static void showRfcs(ObjectOutputStream output, ObjectInputStream input, String hostName, String randomPort)
 			throws IOException {
-		output.writeObject(" LIST ALL " + version + "\n HOST: " + InetAddress.getByName(hostName).getHostAddress()
-				+ "\n PORT: " + randomPort + "\n");
+		System.out.println("Show RFCs called..");
+		output.writeObject(" LIST ALL " + version + "\n HOST: " + hostName+ "\n PORT: " + randomPort + "\n");
 		try {
-			String resp = ((String) input.readObject()).trim();
-			System.out.println(resp);
-			if (! resp.startsWith(version)) {
+			String reply = ((String) input.readObject()).trim();
+			System.out.println(reply);
+			/*if (! resp.startsWith(version)) {
 				System.out.println("Error: Peer has different version");
 				return;
-			}
-			System.out.println("200 ok");
-			if ((resp.contains("200 OK"))) {
-				System.out.println("200 ok");
-				resp = (String) input.readObject();
-				while (!resp.equalsIgnoreCase("end")) {
-					System.out.print(resp);
-					resp = (String) input.readObject();
+			}*/
+			if ((reply.contains("200 OK"))) {
+				reply = (String) input.readObject();
+				while (!reply.equalsIgnoreCase("end")) {
+					System.out.print(reply);
+					reply = (String) input.readObject();
 				}
 				return;
 			} else{
-				//handleErrorMessages(resp);
+				//handleErrorMessages(reply);
 			}
 		} catch (Exception e) {
 			System.err.println(e);
 		}
 	}
-
+	
+	private static void lookupRfc(ObjectOutputStream output, ObjectInputStream input, BufferedReader br, String hostName, String port) throws IOException {
+			System.out.println("You can lookup an existing RFC here..");
+			System.out.println("Enter RFC number to search:");
+			String rfcNumber = br.readLine().trim();
+			System.out.println("Enter title:");
+			String rfcTitle = br.readLine().trim();
+			output.writeObject(" LOOKUP RFC " + rfcNumber + " " + version + "\n HOST: "+ hostName + "\n PORT: " + port + "\n TITLE: " + rfcTitle+ "\n");
+			output.writeObject(rfcNumber);
+			output.writeObject(rfcTitle);
+			
+			try {
+				String resp = ((String) input.readObject()).trim();
+				System.out.println(resp);
+				if ((resp.contains("200 OK"))) {
+					resp = (String) input.readObject();
+					while (!resp.equalsIgnoreCase("\n")) {
+						System.out.print(resp);
+						resp = (String) input.readObject();
+					}
+					return;
+				} else{
+					//handleErrorMessages(resp);
+				}
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
 	
 	@Override
 	public void run() {
