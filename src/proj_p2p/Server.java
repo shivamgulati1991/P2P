@@ -65,14 +65,18 @@ public class Server implements Runnable {
 		    socket = sock.accept();
 	        new Thread(this).start();
 	        cPort = socket.getPort();
+	        String clientIP=socket.getInetAddress().toString();
 			System.out.println("Client connected at port: "+ cPort);
 			input = new ObjectInputStream (socket.getInputStream());
 		    output = new ObjectOutputStream(socket.getOutputStream());
 		    hostName = (input.readObject()).toString();
+			Peers newPeer=new Peers(hostName+" "+clientIP,cPort);
+			peerList.add(newPeer);
+			System.out.println("New peer has been added.");
 			
-		    //List peerObj = new peerList(hostName, Integer.toString(cPort));
-			//peerList.add(peerObj);
-			//System.out.println("Peer Added successfully");
+			//Display peerlist
+			for(Peers peer:peerList)
+				System.out.println(peer.hostname+" "+peer.port);
 	    }
 	    catch(Exception e){
 	    	System.err.println(e);
