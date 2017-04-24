@@ -80,9 +80,10 @@ public class Client implements Runnable {
 				int choice=Integer.parseInt(br.readLine());
 				switch (choice){
 				case 1:
-					Add(output,input,hostName,Integer.toString(randomPort),br);
+					add(output,input,hostName,Integer.toString(randomPort),br);
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
 				case 2: 
+					showRfcs(output,input,hostName,Integer.toString(randomPort));
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
 				case 3: 
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
@@ -100,7 +101,7 @@ public class Client implements Runnable {
 		}
 	}
 	
-	private static void Add(ObjectOutputStream output,ObjectInputStream input,String hostName,String randomPort,BufferedReader br){
+	private static void add(ObjectOutputStream output,ObjectInputStream input,String hostName,String randomPort,BufferedReader br){
 		String rfcNumber=null,rfcTitle=null,fileName=null;
 		try{
 			System.out.println("Enter RFC number: ");
@@ -119,12 +120,13 @@ public class Client implements Runnable {
 			File file=new File(location.getCanonicalPath()+"\\"+fileName);
 			if(file.exists()){
 				System.out.println("yes");
-				output.writeObject(" ADD RFC " + rfcNumber + " " + version + "\n HOST:"+ hostName + "\n PORT:" + randomPort + "\n TITLE:" + rfcTitle + "\n");
+				output.writeObject(" ADD RFC " + rfcNumber + " " + version + "\n HOST:"+ InetAddress.getByName(hostName) + "\n PORT:" + randomPort + "\n TITLE:" + rfcTitle + "\n");
 				output.writeObject(rfcNumber);
 				output.writeObject(hostName);
 				output.writeObject(randomPort);
 				output.writeObject(rfcTitle);
-				System.out.println(input.readObject());
+				System.out.println("RFC has been added\n");
+				//System.out.println(input.readObject());
 			}
 			else if((!file.exists())){
 				System.out.println("File doesn't exist for adding.");
@@ -134,6 +136,36 @@ public class Client implements Runnable {
 			System.out.println(e);
 		}
 	}
+	
+	private static void showRfcs(ObjectOutputStream output, ObjectInputStream input, String hostName, String randomPort)
+			throws IOException {
+		output.writeObject(" LIST ALL " + version + "\n HOST: " + InetAddress.getByName(hostName)
+				+ "\n PORT: " + randomPort + "\n");
+		try {
+			String resp = ((String) input.readObject()).trim();
+			System.out.println(resp);
+			if (! resp.startsWith(version)) {
+				System.out.println("Error: Peer has different version");
+				return;
+			}
+			System.out.println("200 ok");
+			if ((resp.contains("200 OK"))) {
+				System.out.println("200 ok");
+				resp = (String) input.readObject();
+				while (!resp.equalsIgnoreCase("end")) {
+					System.out.print(resp);
+					resp = (String) input.readObject();
+				}
+				return;
+			} else{
+				//handleErrorMessages(resp);
+			}
+		} catch (Exception e) {
+			System.err.println(e);
+		}
+	}
+
+	
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub

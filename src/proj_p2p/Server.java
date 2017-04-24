@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 
 public class Server implements Runnable {
 	private static final String version = "P2P-CI/1.0";
@@ -59,8 +60,23 @@ public class Server implements Runnable {
 		
 	}
 	
-	public void showRfcs(){
-		
+	public void showRfcs(ObjectOutputStream output,ObjectInputStream input){
+		try{
+			System.out.println("here");
+			output.writeObject(version + " 200 OK\n");
+			ListIterator<Rfc> iterator = rfcList.listIterator();
+			Rfc traverseRfc = null;
+			System.out.println("here2");
+		    while((iterator.hasNext()))                                    
+		    {
+		    	System.out.println("here3");
+		    	traverseRfc = iterator.next();
+		    	output.writeObject(traverseRfc.rfcnumber + " " + traverseRfc.title + " " + traverseRfc.hostname + "\n");
+		    }
+		    output.writeObject("end");
+		} catch(Exception e){
+			System.err.println(e);
+		}
 	}
 	
 	public void lookupRfc(){
@@ -108,11 +124,11 @@ public class Server implements Runnable {
 						addRfc(output, input);	
 						break;
 					}
-					/*case "LIST":{
-						listAllRFCs(input, output);
+					case "LIST":{
+						showRfcs(output, input);
 						break;
 					}
-					case "LOOKUP":{
+					/*case "LOOKUP":{
 						lookUpAnRFC(input, output);
 						break;
 					}*/
