@@ -37,7 +37,7 @@ public class Client implements Runnable {
 	    return randomPort;
 	}
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
 		String IPaddr=null,hostName = null;
 		if(args.length==2){
@@ -53,6 +53,9 @@ public class Client implements Runnable {
 			ObjectOutputStream output=null;
 			ObjectInputStream input=null;
 			int randomPort=Client.getRandomPort(3000, 5000);
+			
+			//start a new client for peer
+			new Client(randomPort);
 			try{
 				clientSocket=new Socket(IPaddr,port);
 				output=new ObjectOutputStream(clientSocket.getOutputStream());
@@ -220,40 +223,44 @@ public class Client implements Runnable {
 	public void run() {
 		// TODO Auto-generated method stub
 		Socket sock1 = null;
-		ObjectInputStream inputGet= null;
-		ObjectOutputStream outputGet = null;
-		
+		ObjectInputStream inputGet= null; ObjectOutputStream outputGet = null;
 		try {
 			sock1 = serverSocket.accept();
+			System.out.println("check");
 			new Thread(this).start(); 
 			inputGet = new ObjectInputStream(sock1.getInputStream());
 			outputGet = new ObjectOutputStream(sock1.getOutputStream());
-			
-		} catch (Exception e) {
-			System.out.println("Connection failure during: "+ e);
-			if (sock1.isConnected()) {
+			System.out.println("check2");
+		} 
+		catch (Exception e) {
+			System.err.println(e);
+			/*if (sock1.isConnected()) {
 				try {
 					sock1.close();
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
 			}
-			return; 
+			return; */
 		}
 		try {
-			String rsp = (String) inputGet.readObject();
-			System.out.println(rsp);
-			if (rsp.contains("GET")) {
+			String reply = (String) inputGet.readObject();
+			System.out.println(reply);
+			if (reply.contains("GET")) {
 				//createFile(ois, oos);            
 			}
-		} catch (Exception e) {
-			System.out.println("Unable to send the requested file");
-		} finally {
+		} 
+		catch (Exception e) {
+			System.err.println(e);
+		} 
+		finally {
 			try {
 				outputGet.close();
 				inputGet.close();
 				sock1.close();
-			} catch (Exception e) {
+			} 
+			catch (Exception e) {
+				System.err.println(e);
 			}
 		}
 	}
