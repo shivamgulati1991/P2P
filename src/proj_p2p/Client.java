@@ -174,6 +174,7 @@ public class Client implements Runnable {
 		}
 	}
 	
+	//lookup the entered RFC and return the matching list
 	private static void lookupRfc(ObjectOutputStream output, ObjectInputStream input, BufferedReader br, String hostName, String port) throws IOException {
 			System.out.println("You can lookup an existing RFC here..");
 			System.out.println("Enter RFC number to search:");
@@ -185,13 +186,13 @@ public class Client implements Runnable {
 			output.writeObject(rfcTitle);
 			
 			try {
-				String resp = ((String) input.readObject()).trim();
-				System.out.println(resp);
-				if ((resp.contains("200 OK"))) {
-					resp = (String) input.readObject();
-					while (!resp.equalsIgnoreCase("\n")) {
-						System.out.print(resp);
-						resp = (String) input.readObject();
+				String reply = ((String) input.readObject()).trim();
+				System.out.println(reply);
+				if ((reply.contains("200 OK"))) {
+					reply = (String) input.readObject();
+					while (!reply.equalsIgnoreCase("\n")) {
+						System.out.print(reply);
+						reply = (String) input.readObject();
 					}
 					return;
 				} else{
@@ -202,10 +203,12 @@ public class Client implements Runnable {
 			}
 		}
 	
+	//download an RFC from another peer
 	private static void getRfc(ObjectOutputStream output, ObjectInputStream input,String hostName,BufferedReader br) throws IOException {
 		Socket newSocket = null;
 		String host = "";
 		int rfcNumber=0,port = 0;
+		//take user input for the RFC and host and port and setup connection
 		try {
 			System.out.println("Enter RFC number: ");
 			rfcNumber = Integer.parseInt(br.readLine().trim());
@@ -220,6 +223,7 @@ public class Client implements Runnable {
 			System.err.println(e);
 		}
 		
+		//call the GET operation and download the requested RFC from the peer chosen
 		try {
 			ObjectOutputStream outputNew = new ObjectOutputStream(newSocket.getOutputStream());
 			ObjectInputStream inputNew = new ObjectInputStream(newSocket.getInputStream());
@@ -249,41 +253,9 @@ public class Client implements Runnable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		//fileRequest(hostName, newSocket, rfcNumber, host, port);
 	}
 	
-	private static void fileRequest(String hostName, Socket getsock, int rfcNumber, String rfcHost, int rfcPort) throws IOException {
-		try {
-			ObjectOutputStream output = new ObjectOutputStream(getsock.getOutputStream());
-			ObjectInputStream input = new ObjectInputStream(getsock.getInputStream());
-			output.writeObject(" GET RFC " + rfcNumber + " " + version + "\n HOST: "+ hostName + "\n OS: " + System.getProperty("os.name") + "\n");
-			output.writeObject(Integer.toString(rfcNumber));
-			String reply = ((String) input.readObject()).trim();
-			System.out.println(reply);
-			if (!reply.startsWith(version)) {
-				System.out.println("Error: Peer has different version");
-				//handleErrorMessages("505 P2P-CI Version Not Supported");
-				return;
-			}
-			if ((reply.contains("200 OK"))) {
-				File location = new File("Rfc");
-				File newFile = new File(location.getCanonicalPath() + "\\RFC" + rfcNumber + "_1.txt");
-				newFile.createNewFile();
-				try {
-					byte[] content = (byte[]) input.readObject();
-					Files.write(newFile.toPath(), content);
-				} 
-				catch (EOFException eof) {
-					System.out.println("End of file");
-				}
-			} else{
-				//handleErrorMessages(reply);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
+	//create a new RFC file and transfer the content when GET called
 	private void createNewFileAtPeer(ObjectOutputStream output, ObjectInputStream input) throws IOException, ClassNotFoundException {
 		String rfcNumber = (String) input.readObject();
 		String fileName = "RFC" + rfcNumber + ".txt";          
