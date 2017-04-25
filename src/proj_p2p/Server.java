@@ -84,6 +84,8 @@ public class Server implements Runnable {
 			Rfc traverseRfc = null;
 			int checkExists = 0;
 			String existingRfcs="";
+			
+			//get all the lookup values for RFCs
 			while((iterator.hasNext()))                                    
 		    {
 				traverseRfc = (Rfc) iterator.next();
@@ -98,17 +100,6 @@ public class Server implements Runnable {
 			output.writeObject(existingRfcs);
 			output.writeObject("\n");
 			}
-			/*if(checkExists==1){
-				output.writeObject(version + " 200 OK\n");
-			    while((iterator.hasNext()))                                    
-			    {
-			    	traverseRfc = (Rfc) iterator.next();
-			    	if(rfcNumber==traverseRfc.rfcnumber){
-			    		output.writeObject(rfcNumber + " " + traverseRfc.title + " " + traverseRfc.hostname + "\n");
-			    	}
-			    }
-			    output.writeObject("\n");
-			}*/
 			else{
 				output.writeObject("404 Not Found");
 			}

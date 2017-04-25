@@ -1,3 +1,7 @@
+/*
+ * References from stack overflow community 
+ * wrt to Socket programming, threads, Stream output and inputs in Java
+ */
 package proj_p2p;
 
 import java.io.BufferedReader;
@@ -23,9 +27,7 @@ public class Client implements Runnable {
 	
 	public Client(int portNo) throws IOException{
 		serverSocket=new ServerSocket(portNo);
-		System.out.println("Starting client now..");
-		System.out.println("Client is at Host: "+InetAddress.getLocalHost().getHostAddress());
-		System.out.println("Port number: "+serverSocket.getLocalPort());
+		System.out.println("Starting client now..\nClient is at Host: "+InetAddress.getLocalHost().getHostAddress()+" Port number: "+serverSocket.getLocalPort());
 		new Thread(this).start();
 	}
 	
@@ -58,7 +60,7 @@ public class Client implements Runnable {
 				output.writeObject(hostName.toString());
 				int clientPort=clientSocket.getLocalPort();
 				
-				System.out.println("Client is running now."+"Randomport: "+randomPort);
+				System.out.println("Client is running now."+" Port: "+randomPort);
 				System.out.println("Hostname: "+hostName+"  Port: "+clientPort);
 				userMenu(output,input,hostName,InetAddress.getByName(IPaddr),clientPort,randomPort);
 			}
@@ -90,6 +92,7 @@ public class Client implements Runnable {
 					lookupRfc(output,input,br,hostName,Integer.toString(randomPort));
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
 				case 4: 
+					getRfc(hostName,br);
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
 				case 5: System.exit(1);
 				default: 
@@ -98,7 +101,7 @@ public class Client implements Runnable {
 			}
 		}
 		catch(Exception e){
-			System.out.println("Error occured!");
+			System.out.println("Error occured.");
 			System.err.println(e);
 		}
 	}
@@ -192,10 +195,67 @@ public class Client implements Runnable {
 			}
 		}
 	
+	private static void getRfc(String hostName,BufferedReader br) throws IOException {
+		Socket newSocket = null;
+		String host = "";
+		int rfcNumber=0,port = 0;
+		try {
+			System.out.println("Enter RFC number: ");
+			rfcNumber = Integer.parseInt(br.readLine().trim());
+			System.out.println("Enter host: ");
+			host = br.readLine().trim();
+			System.out.println("Enter port: ");
+			port = Integer.parseInt(br.readLine().trim());
+			newSocket = new Socket(host, port);
+			System.out.println("Socket found");	
+		}
+		 catch(Exception e){
+			System.out.println("An error occured.");
+			System.err.println(e);
+		}
+		//fileRequest(hostName, newSocket, rfcNumber, rfcHost, rfcPort);
+	}
+	
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
+		Socket sock1 = null;
+		ObjectInputStream inputGet= null;
+		ObjectOutputStream outputGet = null;
 		
+		try {
+			sock1 = serverSocket.accept();
+			new Thread(this).start(); 
+			inputGet = new ObjectInputStream(sock1.getInputStream());
+			outputGet = new ObjectOutputStream(sock1.getOutputStream());
+			
+		} catch (Exception e) {
+			System.out.println("Connection failure during: "+ e);
+			if (sock1.isConnected()) {
+				try {
+					sock1.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+			return; 
+		}
+		try {
+			String rsp = (String) inputGet.readObject();
+			System.out.println(rsp);
+			if (rsp.contains("GET")) {
+				//createFile(ois, oos);            
+			}
+		} catch (Exception e) {
+			System.out.println("Unable to send the requested file");
+		} finally {
+			try {
+				outputGet.close();
+				inputGet.close();
+				sock1.close();
+			} catch (Exception e) {
+			}
+		}
 	}
 
 }
