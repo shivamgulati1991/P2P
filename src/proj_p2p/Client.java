@@ -5,6 +5,7 @@
 package proj_p2p;
 
 import java.io.BufferedReader;
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -14,11 +15,14 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
+import java.util.Date;
 
 public class Client implements Runnable {
 	private static final String version = "P2P-CI/1.0";
@@ -95,7 +99,7 @@ public class Client implements Runnable {
 					lookupRfc(output,input,br,hostName,Integer.toString(randomPort));
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
 				case 4: 
-					getRfc(hostName,br);
+					getRfc(output,input,hostName,br);
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
 				case 5: System.exit(1);
 				default: 
@@ -198,7 +202,7 @@ public class Client implements Runnable {
 			}
 		}
 	
-	private static void getRfc(String hostName,BufferedReader br) throws IOException {
+	private static void getRfc(ObjectOutputStream output, ObjectInputStream input,String hostName,BufferedReader br) throws IOException {
 		Socket newSocket = null;
 		String host = "";
 		int rfcNumber=0,port = 0;
@@ -210,13 +214,103 @@ public class Client implements Runnable {
 			System.out.println("Enter port: ");
 			port = Integer.parseInt(br.readLine().trim());
 			newSocket = new Socket(host, port);
-			System.out.println("Socket found");	
 		}
 		 catch(Exception e){
 			System.out.println("An error occured.");
 			System.err.println(e);
 		}
-		//fileRequest(hostName, newSocket, rfcNumber, rfcHost, rfcPort);
+		
+		try {
+			ObjectOutputStream outputNew = new ObjectOutputStream(newSocket.getOutputStream());
+			ObjectInputStream inputNew = new ObjectInputStream(newSocket.getInputStream());
+			outputNew.writeObject(" GET RFC " + rfcNumber + " " + version + "\n HOST: "+ hostName + "\n OS: " + System.getProperty("os.name") + "\n");
+			outputNew.writeObject(Integer.toString(rfcNumber));
+			String reply = ((String) inputNew.readObject()).trim();
+			System.out.println(reply);
+			if (!reply.startsWith(version)) {
+				System.out.println("Error: Peer has different version");
+				//handleErrorMessages("505 P2P-CI Version Not Supported");
+				return;
+			}
+			if ((reply.contains("200 OK"))) {
+				File location = new File("Rfc");
+				File newFile = new File(location.getCanonicalPath() + "\\RFC" + rfcNumber + "_1.txt");
+				newFile.createNewFile();
+				try {
+					byte[] content = (byte[]) inputNew.readObject();
+					Files.write(newFile.toPath(), content);
+				} 
+				catch (EOFException eof) {
+					System.out.println("End of file has been reached.");
+				}
+			} else{
+				//handleErrorMessages(reply);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		//fileRequest(hostName, newSocket, rfcNumber, host, port);
+	}
+	
+	private static void fileRequest(String hostName, Socket getsock, int rfcNumber, String rfcHost, int rfcPort) throws IOException {
+		try {
+			ObjectOutputStream output = new ObjectOutputStream(getsock.getOutputStream());
+			ObjectInputStream input = new ObjectInputStream(getsock.getInputStream());
+			output.writeObject(" GET RFC " + rfcNumber + " " + version + "\n HOST: "+ hostName + "\n OS: " + System.getProperty("os.name") + "\n");
+			output.writeObject(Integer.toString(rfcNumber));
+			String reply = ((String) input.readObject()).trim();
+			System.out.println(reply);
+			if (!reply.startsWith(version)) {
+				System.out.println("Error: Peer has different version");
+				//handleErrorMessages("505 P2P-CI Version Not Supported");
+				return;
+			}
+			if ((reply.contains("200 OK"))) {
+				File location = new File("Rfc");
+				File newFile = new File(location.getCanonicalPath() + "\\RFC" + rfcNumber + "_1.txt");
+				newFile.createNewFile();
+				try {
+					byte[] content = (byte[]) input.readObject();
+					Files.write(newFile.toPath(), content);
+				} 
+				catch (EOFException eof) {
+					System.out.println("End of file");
+				}
+			} else{
+				//handleErrorMessages(reply);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void createNewFileAtPeer(ObjectOutputStream output, ObjectInputStream input) throws IOException, ClassNotFoundException {
+		String rfcNumber = (String) input.readObject();
+		String fileName = "RFC" + rfcNumber + ".txt";          
+		File location = new File("RFC");
+		File file = new File(location.getCanonicalPath() + "\\" + fileName);
+		
+		if (file.exists()) {
+			//get the current and date modified for file in GMT
+			SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
+			Date currentDate=new Date();
+			Date modifiedDate=new Date(file.lastModified());
+			System.out.println("Sending RFC to another peer..");
+			byte[] content = Files.readAllBytes(file.toPath());
+			String data=new String(content);
+			output.writeObject(version + " 200 OK \n"+
+				"Date: "+ dateFormat.format(currentDate) + " GMT\n"+
+				"OS: " + System.getProperty("os.name")+ "\n"+
+				"Last-Modified: " + dateFormat.format(modifiedDate) +" GMT \n"+
+				"Content-Length: " + file.length() + 
+				"\nContent-Type: text/text \n\n"+data);
+				output.writeObject(content);
+		} 
+		else {
+			output.writeObject("P2P-CI/1.0 404 Not Found \n");
+			output.flush();
+		}
+		output.close();
 	}
 	
 	@Override
@@ -226,28 +320,26 @@ public class Client implements Runnable {
 		ObjectInputStream inputGet= null; ObjectOutputStream outputGet = null;
 		try {
 			sock1 = serverSocket.accept();
-			System.out.println("check");
 			new Thread(this).start(); 
 			inputGet = new ObjectInputStream(sock1.getInputStream());
 			outputGet = new ObjectOutputStream(sock1.getOutputStream());
-			System.out.println("check2");
 		} 
 		catch (Exception e) {
 			System.err.println(e);
-			/*if (sock1.isConnected()) {
+			if (sock1.isConnected()) {
 				try {
 					sock1.close();
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
 			}
-			return; */
+			return; 
 		}
 		try {
 			String reply = (String) inputGet.readObject();
 			System.out.println(reply);
-			if (reply.contains("GET")) {
-				//createFile(ois, oos);            
+			if (reply.contains("GET")) {   
+				createNewFileAtPeer(outputGet, inputGet);
 			}
 		} 
 		catch (Exception e) {
@@ -255,9 +347,7 @@ public class Client implements Runnable {
 		} 
 		finally {
 			try {
-				outputGet.close();
-				inputGet.close();
-				sock1.close();
+				outputGet.close(); inputGet.close(); sock1.close();
 			} 
 			catch (Exception e) {
 				System.err.println(e);
