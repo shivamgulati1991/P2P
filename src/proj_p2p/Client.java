@@ -65,6 +65,7 @@ public class Client implements Runnable {
 				output=new ObjectOutputStream(clientSocket.getOutputStream());
 				input=new ObjectInputStream(clientSocket.getInputStream());
 				output.writeObject(hostName.toString());
+				output.writeObject(randomPort);
 				int clientPort=clientSocket.getLocalPort();
 				
 				System.out.println("Client is running now."+" Port: "+randomPort);
@@ -101,15 +102,16 @@ public class Client implements Runnable {
 				case 4: 
 					getRfc(output,input,hostName,br);
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
-				case 5: System.exit(1);
+				case 5:
+					Server.deleteFromLists(randomPort);
+					System.exit(1);
 				default: 
 					userMenu(output,input,hostName,IPaddr,clientPort,randomPort);
 				}
 			}
 		}
 		catch(Exception e){
-			System.out.println("Error occured.");
-			System.err.println(e);
+			System.out.println("Peer closed.");
 		}
 	}
 	

@@ -8,6 +8,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -28,12 +29,11 @@ public class Server implements Runnable {
 	
 	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
-		int portNo=Integer.parseInt(args[0]);
 		if(args.length == 1){	
-			new Server(portNo);
+			new Server(Integer.parseInt(args[0]));
 		}
 		else{
-			System.out.println("Error. Check arguments. Add port number as an argument if missing.");
+			System.out.println("Pass port number as argument");
 		}
 	}
 
@@ -56,10 +56,7 @@ public class Server implements Runnable {
 			}
 	}
 	
-	public void deleteRfc(){
-		
-	}
-	
+
 	public void showRfcs(ObjectOutputStream output,ObjectInputStream input) {
 		try{
 			output.writeObject(version + " 200 OK\n");
@@ -72,7 +69,7 @@ public class Server implements Runnable {
 		    }
 		    output.writeObject("end");
 		} catch(Exception e){
-			System.err.println(e);
+			System.out.println("An error occured.");
 		}
 	}
 	
@@ -88,10 +85,10 @@ public class Server implements Runnable {
 			//get all the lookup values for RFCs
 			while((iterator.hasNext()))                                    
 		    {
+				//Iterate to find RFCs
 				traverseRfc = (Rfc) iterator.next();
 		    	if(rfcNumber==traverseRfc.rfcnumber){
 		    		checkExists = 1;
-		    		System.out.println("yes");
 		    		existingRfcs=existingRfcs + rfcNumber + " " + traverseRfc.title + " " + traverseRfc.hostname + "\n";
 		    	}
 		    }
@@ -106,8 +103,42 @@ public class Server implements Runnable {
 		} catch (Exception e) {
 			System.out.println(e);
 		}
-
 	}
+	
+	public static void deleteFromLists(int port){
+			int i = 0;
+			int rfcPort;
+			try{
+				Rfc traverseRfc=null;
+				while(i<rfcList.size()){
+					traverseRfc=(Rfc) rfcList.get(i);
+					rfcPort=Integer.parseInt(traverseRfc.hostname.split(":")[1]);
+					if(rfcPort==port){
+						rfcList.remove(i);
+						i=0;
+						continue;
+					}
+					i++;
+				}
+			}
+			catch(Exception e){
+				System.out.println("An error occured. Try again.");
+			}
+		try {
+			ListIterator<Peers> iter = peerList.listIterator();
+			Peers traversePeer = null;
+			while((iter.hasNext()))                                    
+			{
+				traversePeer = (Peers) iter.next();
+				if(port==traversePeer.port){
+					peerList.remove(traversePeer);				
+				}
+			}
+		} catch (ConcurrentModificationException e) {
+			//System.err.println(e);
+		}
+	}
+	
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
@@ -116,7 +147,7 @@ public class Server implements Runnable {
 		ObjectInputStream  input = null;
 	    ObjectOutputStream output = null;
 	    String hostName = null;
-	    int cPort = 0;
+	    int cPort = 0,randomPort=0;
 	    try{
 		    socket = sock.accept();
 	        new Thread(this).start();
@@ -126,25 +157,34 @@ public class Server implements Runnable {
 			input = new ObjectInputStream (socket.getInputStream());
 		    output = new ObjectOutputStream(socket.getOutputStream());
 		    hostName = (input.readObject()).toString();
-			Peers newPeer=new Peers(hostName+" "+clientIP,cPort);
+		    randomPort=(int) (input.readObject());
+			Peers newPeer=new Peers(hostName+" "+clientIP,randomPort);
 			peerList.add(newPeer);
 			System.out.println("New peer has been added.");
 			
-			//Display peerlist
+			//Display All peers 
+			System.out.println("\nPeers:");
 			for(Peers peer:peerList)
 				System.out.println(peer.hostname+" "+peer.port);
 	    }
 	    catch(Exception e){
 	    	System.err.println(e);
-	    }
-	    
+	        {
+	        	//close peer
+	        	deleteFromLists(cPort);
+	        	try {
+	        		socket.close();
+	        	}
+	        	catch(IOException ie){
+	        		System.err.println(ie);
+	        	} 
+            }
+	    }	    
 		   try { 
 			   while (true)
 		       {  
 				   	String request = (String) input.readObject();
 				 	System.out.println(request);
-				 	//String[] result = request.trim().split("\\s");
-				 	//executeRequest(result[0], input, output);
 					switch(request.trim().split("\\s")[0].trim()){
 					case "ADD":{
 						addRfc(output, input);	
@@ -164,9 +204,10 @@ public class Server implements Runnable {
 				}
 		        }       
 		  	} catch (Exception e) {
-		  		//removePeer(clientPort, true);
-		  		System.err.println(e);
-		  		//System.out.println("Connection with client " + hostName +" @ " + clientPort + " closed");
+		  		//Remove peer when closed
+		  		deleteFromLists(randomPort);
+		  		//System.err.println(e);
+		  		System.out.println("Peer closed: " + hostName +"Port: "+randomPort);
 		  	}
 		
 	}
