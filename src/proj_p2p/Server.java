@@ -37,17 +37,16 @@ public class Server implements Runnable {
 		}
 	}
 
-	public void addRfc(ObjectOutputStream output, ObjectInputStream input){
+	public void addRfc(ObjectOutputStream output, ObjectInputStream input,String clientIP){
 		try {
 				String rfcNumber = (String) input.readObject();
 				String hostName = (String) input.readObject();
 				int clientPort = Integer.parseInt(((String) input.readObject()).trim());
 				String title = (String) input.readObject();
-				
-				Rfc newRfc=new Rfc(Integer.parseInt(rfcNumber),title,hostName+":"+clientPort);
+				Rfc newRfc=new Rfc(Integer.parseInt(rfcNumber),title,hostName+clientIP+":"+clientPort);
 				rfcList.add(newRfc);
 				for(Rfc peer:rfcList)
-					System.out.println(peer.rfcnumber+" "+peer.hostname+" "+peer.title);
+					System.out.println("RFCNumber: " + peer.rfcnumber+" Title: "+peer.title+" Host: "+peer.hostname);
 				
 				System.out.println("RFC has been added successfully");
 				output.writeObject("RFC has been added successfully");
@@ -146,13 +145,13 @@ public class Server implements Runnable {
 		Socket socket=null;
 		ObjectInputStream  input = null;
 	    ObjectOutputStream output = null;
-	    String hostName = null;
+	    String hostName = null,clientIP=null;
 	    int cPort = 0,randomPort=0;
 	    try{
 		    socket = sock.accept();
 	        new Thread(this).start();
 	        cPort = socket.getPort();
-	        String clientIP=socket.getInetAddress().toString();
+	        clientIP=socket.getInetAddress().toString();
 			System.out.println("Client connected at port: "+ cPort);
 			input = new ObjectInputStream (socket.getInputStream());
 		    output = new ObjectOutputStream(socket.getOutputStream());
@@ -187,7 +186,7 @@ public class Server implements Runnable {
 				 	System.out.println(request);
 					switch(request.trim().split("\\s")[0].trim()){
 					case "ADD":{
-						addRfc(output, input);	
+						addRfc(output, input,clientIP);	
 						break;
 					}
 					case "LIST":{

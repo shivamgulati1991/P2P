@@ -26,7 +26,7 @@ import java.util.Date;
 
 public class Client implements Runnable {
 	private static final String version = "P2P-CI/1.0";
-	public static List<Rfc> rfcList=Collections.synchronizedList(new ArrayList<Rfc>());
+	//public static List<Rfc> rfcList=Collections.synchronizedList(new ArrayList<Rfc>());
 	public ServerSocket serverSocket;
 	
 	public Client(int portNo) throws IOException{
@@ -66,10 +66,8 @@ public class Client implements Runnable {
 				input=new ObjectInputStream(clientSocket.getInputStream());
 				output.writeObject(hostName.toString());
 				output.writeObject(randomPort);
-				int clientPort=clientSocket.getLocalPort();
-				
-				System.out.println("Client is running now."+" Port: "+randomPort);
-				System.out.println("Hostname: "+hostName+"  Port: "+clientPort);
+				int clientPort=clientSocket.getLocalPort();				
+				System.out.println("Client is running now.\nHostname: "+hostName+"  Port: "+randomPort);
 				userMenu(output,input,hostName,InetAddress.getByName(IPaddr),clientPort,randomPort);
 			}
 			catch(Exception e){
@@ -81,6 +79,7 @@ public class Client implements Runnable {
 		}
 	}
 	
+	//Display user menu with options
 	private static void userMenu(ObjectOutputStream output,ObjectInputStream input,String hostName,InetAddress IPaddr,int clientPort,int randomPort){
 		System.out.println("\n\nPlease select option number from the below choices:");
 		System.out.println("\n1 - Add an RFC \n2 - List RFCs \n3 - Lookup RFC \n4 - Download(GET) RFC \n5 - Exit");
@@ -130,7 +129,7 @@ public class Client implements Runnable {
 		
 		fileName="RFC"+rfcNumber+".txt";
 		File location=new File("Rfc");
-		
+		//check if file exists
 		try{
 			File file=new File(location.getCanonicalPath()+"\\"+fileName);
 			if(file.exists()){
@@ -150,6 +149,7 @@ public class Client implements Runnable {
 		}
 	}
 	
+	//show all RFCs when LIST called
 	private static void showRfcs(ObjectOutputStream output, ObjectInputStream input, String hostName, String randomPort)
 			throws IOException {
 		System.out.println("Show RFCs called..");
@@ -157,10 +157,6 @@ public class Client implements Runnable {
 		try {
 			String reply = ((String) input.readObject()).trim();
 			System.out.println(reply);
-			/*if (! resp.startsWith(version)) {
-				System.out.println("Error: Peer has different version");
-				return;
-			}*/
 			if ((reply.contains("200 OK"))) {
 				reply = (String) input.readObject();
 				while (!reply.equalsIgnoreCase("end")) {
@@ -169,7 +165,7 @@ public class Client implements Runnable {
 				}
 				return;
 			} else{
-				//handleErrorMessages(reply);
+				System.out.println("400 Bad Request. An error occured.");
 			}
 		} catch (Exception e) {
 			System.err.println(e);
@@ -198,10 +194,10 @@ public class Client implements Runnable {
 					}
 					return;
 				} else{
-					//handleErrorMessages(resp);
+					System.out.println("An error occured");
 				}
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				System.out.println("An error occured");
 			}
 		}
 	
@@ -221,8 +217,7 @@ public class Client implements Runnable {
 			newSocket = new Socket(host, port);
 		}
 		 catch(Exception e){
-			System.out.println("An error occured.");
-			System.err.println(e);
+			System.out.println("400 Bad Request. An error occured.");
 		}
 		
 		//call the GET operation and download the requested RFC from the peer chosen
@@ -235,11 +230,12 @@ public class Client implements Runnable {
 			System.out.println(reply);
 			if (!reply.startsWith(version)) {
 				System.out.println("Error: Peer has different version");
-				//handleErrorMessages("505 P2P-CI Version Not Supported");
 				return;
 			}
+			//check status response
 			if ((reply.contains("200 OK"))) {
 				File location = new File("Rfc");
+				//append _1 in the end to depict a new file
 				File newFile = new File(location.getCanonicalPath() + "\\RFC" + rfcNumber + "_1.txt");
 				newFile.createNewFile();
 				try {
@@ -250,10 +246,10 @@ public class Client implements Runnable {
 					System.out.println("End of file has been reached.");
 				}
 			} else{
-				//handleErrorMessages(reply);
+				System.out.println("An error occured while processing the request.");
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.out.println("An error occured.");
 		}
 	}
 	
@@ -304,7 +300,7 @@ public class Client implements Runnable {
 				try {
 					sock1.close();
 				} catch (IOException e1) {
-					e1.printStackTrace();
+					System.err.println(e1);
 				}
 			}
 			return; 
@@ -328,5 +324,4 @@ public class Client implements Runnable {
 			}
 		}
 	}
-
 }
