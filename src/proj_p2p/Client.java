@@ -26,7 +26,6 @@ import java.util.Date;
 
 public class Client implements Runnable {
 	private static final String version = "P2P-CI/1.0";
-	//public static List<Rfc> rfcList=Collections.synchronizedList(new ArrayList<Rfc>());
 	public ServerSocket serverSocket;
 	
 	public Client(int portNo) throws IOException{
