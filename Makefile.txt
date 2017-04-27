@@ -1,14 +1,19 @@
 This needs JAVA version 1.8 to build and run.
 There are 2 main files: Client and Server in package proj_p2p.
 
-To run Server:
-1. Go to bin directory in command prompt and run a
+1. Server:
+
+Go to bin directory of the project in command prompt and run 
 	java proj_p2p.Server <PortNo>   Port can be 7734 or any other value you need.
+eg.
+>>>>>>java proj_p2p.Server 7734
 
 This will give the IP and note it down.
 
-To run Client:
-1. Go to bin directory in command prompt and run a
+
+2. Client:
+
+Go to bin directory in command prompt and run a
 	java proj_p2p.Client <IP> <PortNo>   IP and PortNo are the Server ones.
 
 Client has options to Add, List, Lookup, Download RFC and Exit which are user menu driven.
