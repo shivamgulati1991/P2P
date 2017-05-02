@@ -1,7 +1,7 @@
-#Peer to Peer
+# Peer to Peer
 
 
-##Peer-to-Peer with Centralized Index (P2P-CI) System for Downloading RFCs
+## Peer-to-Peer with Centralized Index (P2P-CI) System for Downloading RFCs
 
 Internet protocol standards are defined in documents called “Requests for Comments” (RFCs). RFCs are available
 for download from the IETF web site (http://www.ietf.org/). Rather than using this centralized server for
